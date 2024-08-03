@@ -4,6 +4,12 @@ import routes from './routes/index';
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Parse the JSON request bodies
+app.use(express.json());
+
+// Pretty-printed JSON response
+app.set('json spaces', 2);
+
 app.use('/', routes);
 
 /**
