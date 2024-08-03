@@ -10,10 +10,10 @@ class DBClient {
   constructor() {
     this.db = null;
     MongoClient.connect(url, { useUnifiedTopology: true })
-      .then(async (client) => {
+      .then((client) => {
         this.db = client.db(database);
-        await this.createCollectionIfNotExists('users');
-        await this.createCollectionIfNotExists('files');
+        this.db.createCollection('users');
+        this.db.createCollection('files');
       })
       .catch((error) => console.error(`Cannot connect to MongoDB: ${error.message}`));
   }
@@ -62,20 +62,6 @@ class DBClient {
    */
   nbFiles() {
     return this.nbDocuments('files');
-  }
-
-  /**
-   * Creates a collection if it does not already exist.
-   * @param {string} collectionName - The name of the collection to create.
-   * @returns {Promise<void>}
-   */
-  async createCollectionIfNotExists(collectionName) {
-    const collections = await this.db
-      .listCollections({ name: collectionName })
-      .toArray();
-    if (collections.length === 0) {
-      await this.db.createCollection(collectionName);
-    }
   }
 }
 
