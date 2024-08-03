@@ -30,12 +30,10 @@ class RedisClient {
    * @returns {Promise<string>} The value of the key.
    */
   async get(key) {
-    try {
-      return await this.getAsync(key);
-    } catch (error) {
-      console.error(`Error getting key ${key}: ${error.message}`);
-      return null;
-    }
+    return RedisClient.handleAsyncOperation(
+      () => this.getAsync(key),
+      `getting key ${key}`,
+    );
   }
 
   /**
@@ -46,11 +44,10 @@ class RedisClient {
    * @returns {Promise<void>}
    */
   async set(key, value, duration) {
-    try {
-      await this.setAsync(key, duration, value);
-    } catch (error) {
-      console.error(`Error setting key ${key}: ${error.message}`);
-    }
+    return RedisClient.handleAsyncOperation(
+      () => this.setAsync(key, duration, value),
+      `setting key ${key}`,
+    );
   }
 
   /**
@@ -59,10 +56,24 @@ class RedisClient {
    * @returns {Promise<void>}
    */
   async del(key) {
+    return RedisClient.handleAsyncOperation(
+      () => this.delAsync(key),
+      `deleting key ${key}`,
+    );
+  }
+
+  /**
+   * Handles asynchronous operations with error handling.
+   * @param {Function} operation - The asynchronous operation to perform.
+   * @param {string} description - A description of the operation for error messages.
+   * @returns {Promise<any>} The result of the asynchronous operation.
+   */
+  static async handleAsyncOperation(operation, description) {
     try {
-      await this.delAsync(key);
+      return await operation();
     } catch (error) {
-      console.error(`Error deleting key ${key}: ${error.message}`);
+      console.error(`Error ${description}: ${error.message}`);
+      return null;
     }
   }
 }
