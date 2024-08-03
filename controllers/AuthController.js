@@ -45,7 +45,7 @@ class AuthController {
    * @returns {Promise<void>} The response object with no content, or an error message.
    */
   static async getDisconnect(req, res) {
-    const token = req.headers['x-token'];
+    const token = req.header('X-Token');
     if (!token || !(await redisClient.get(`auth_${token}`))) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
