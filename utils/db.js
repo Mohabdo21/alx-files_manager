@@ -13,8 +13,7 @@ class DBClient {
     MongoClient.connect(url, { useUnifiedTopology: true }, (error, client) => {
       if (!error) {
         this.db = client.db(database);
-        this.db.createCollection('users');
-        this.db.createCollection('files');
+        this.initCollections(['users', 'files']);
       } else {
         this.db = null;
         console.error(`Cannot connect to MongoDB: ${error.message}`);
@@ -50,6 +49,22 @@ class DBClient {
       return this.db.collection('files').countDocuments();
     }
     return 0;
+  }
+
+  /**
+   * Initializes collections if they do not already exist.
+   * @param {string[]} collections - The names of the collections to initialize.
+   * @returns {Promise<void>}
+   */
+  async initCollections(collections) {
+    const existingCollections = await this.db.listCollections().toArray();
+    const existingNames = new Set(existingCollections.map((c) => c.name));
+
+    await Promise.all(
+      collections.map((name) => (existingNames.has(name)
+        ? Promise.resolve()
+        : this.db.createCollection(name))),
+    );
   }
 }
 
