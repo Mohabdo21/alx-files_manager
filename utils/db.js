@@ -66,6 +66,32 @@ class DBClient {
         : this.db.createCollection(name))),
     );
   }
+
+  /**
+   * Finds a single document in the specified collection.
+   * @param {string} collectionName - The name of the collection.
+   * @param {Object} query - The query object to match the document.
+   * @param {Object} [projection] - The fields to include or exclude.
+   * @returns {Promise<Object|null>} The found document or null if not found.
+   */
+  async findOne(collectionName, query, projection = {}) {
+    if (!this.db) throw new Error('Database not connected');
+    return this.db.collection(collectionName).findOne(query, { projection });
+  }
+
+  /**
+   * Saves a single document in the specified collection.
+   * @param {string} collectionName - The name of the collection.
+   * @param {Object} document - The document to save.
+   * @returns {Promise<Object>} The saved document with the inserted ID.
+   */
+  async saveOne(collectionName, document) {
+    if (!this.db) throw new Error('Database not connected');
+    const {
+      ops: [newDocument],
+    } = await this.db.collection(collectionName).insertOne(document);
+    return newDocument;
+  }
 }
 
 const dbClient = new DBClient();

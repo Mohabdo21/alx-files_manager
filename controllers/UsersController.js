@@ -23,12 +23,14 @@ class UserController {
     }
 
     try {
-      const collection = dbClient.db.collection('users');
-      if (await collection.findOne({ email })) return res.status(400).json({ error: 'Already exist' });
+      if (await dbClient.findOne('users', { email })) {
+        return res.status(400).json({ error: 'Already exist' });
+      }
 
-      const {
-        ops: [newUser],
-      } = await collection.insertOne({ email, password: sha1(password) });
+      const newUser = await dbClient.saveOne('users', {
+        email,
+        password: sha1(password),
+      });
       return res.status(201).json({ id: newUser._id, email: newUser.email });
     } catch (error) {
       console.error(error);
@@ -51,9 +53,11 @@ class UserController {
       const userId = await redisClient.get(`auth_${token}`);
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const user = await dbClient.db
-        .collection('users')
-        .findOne({ _id: new ObjectId(userId) }, { projection: { email: 1 } });
+      const user = await dbClient.findOne(
+        'users',
+        { _id: new ObjectId(userId) },
+        { email: 1 },
+      );
       return user
         ? res.status(200).json({ id: userId, email: user.email })
         : res.status(401).json({ error: 'Unauthorized' });

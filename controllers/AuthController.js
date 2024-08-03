@@ -23,9 +23,10 @@ class AuthController {
       .split(':');
 
     try {
-      const user = await dbClient.db
-        .collection('users')
-        .findOne({ email, password: sha1(password) });
+      const user = await dbClient.findOne('users', {
+        email,
+        password: sha1(password),
+      });
       if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
       const token = uuidv4();
