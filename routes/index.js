@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import AppController from '../controllers/AppController';
-import UsersController from '../controllers/UsersController';
+import UserController from '../controllers/UsersController';
 import AuthController from '../controllers/AuthController';
 
 const routes = Router();
@@ -21,13 +21,13 @@ routes.get('/stats', AppController.getStats);
  * Route to create a new user in the DB.
  * @name post/users
  */
-routes.post('/users', UsersController.postNew);
+routes.post('/users', UserController.postNew);
 
 /**
  * Route to fetch a user from the DB.
  * @name get/users/me
  */
-routes.get('/users/me', UsersController.getMe);
+routes.get('/users/me', UserController.getMe);
 
 /**
  * Route to login user.
