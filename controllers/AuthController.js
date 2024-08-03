@@ -16,7 +16,7 @@ class AuthController {
    */
   static async getConnect(req, res) {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Basic ')) return res.status(401).json({ error: 'Unauthorized' });
+    if (!authHeader) return res.status(401).json({ error: 'Unauthorized' });
 
     const [email, password] = Buffer.from(authHeader.split(' ')[1], 'base64')
       .toString('ascii')
