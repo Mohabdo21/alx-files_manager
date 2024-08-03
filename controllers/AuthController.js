@@ -16,7 +16,7 @@ class AuthController {
    */
   static async getConnect(req, res) {
     const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: 'Unauthorized' });
+    if (!authHeader || !authHeader.startsWith('Basic ')) return res.status(401).json({ error: 'Unauthorized' });
 
     const [email, password] = Buffer.from(authHeader.split(' ')[1], 'base64')
       .toString('ascii')
@@ -50,7 +50,7 @@ class AuthController {
 
     try {
       await redisClient.del(`auth_${token}`);
-      return res.status(204).send();
+      return res.status(204).json({});
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'Server error' });
