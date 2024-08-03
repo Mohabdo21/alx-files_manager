@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import AppController from '../controllers/AppController';
 import UsersController from '../controllers/UsersController';
+import AuthController from '../controllers/AuthController';
 
 const routes = Router();
 
@@ -22,4 +23,22 @@ routes.get('/stats', AppController.getStats);
  */
 routes.post('/users', UsersController.postNew);
 
-module.exports = routes;
+/**
+ * Route to fetch a user from the DB.
+ * @name get/users/me
+ */
+routes.get('/users/me', UsersController.getMe);
+
+/**
+ * Route to login user.
+ * @name get/connect
+ */
+routes.get('/connect', AuthController.getConnect);
+
+/**
+ * Route to logout user.
+ * @name get/disconnect
+ */
+routes.get('/disconnect', AuthController.getDisconnect);
+
+export default routes;
