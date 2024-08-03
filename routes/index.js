@@ -5,6 +5,7 @@ import AuthController from '../controllers/AuthController';
 
 const routes = Router();
 
+// Application status routes
 /**
  * Route to get the status of the application.
  * @name get/status
@@ -17,6 +18,7 @@ routes.get('/status', AppController.getStatus);
  */
 routes.get('/stats', AppController.getStats);
 
+// User routes
 /**
  * Route to create a new user in the DB.
  * @name post/users
@@ -29,6 +31,7 @@ routes.post('/users', UserController.postNew);
  */
 routes.get('/users/me', UserController.getMe);
 
+// Authentication routes
 /**
  * Route to login user.
  * @name get/connect
