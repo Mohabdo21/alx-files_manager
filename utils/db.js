@@ -8,6 +8,7 @@ const database = process.env.DB_DATABASE || 'file_manager';
  */
 class DBClient {
   constructor() {
+    this.db = null;
     MongoClient.connect(url, { useUnifiedTopology: true })
       .then((client) => {
         this.db = client.db(database);
