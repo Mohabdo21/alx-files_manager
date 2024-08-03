@@ -10,9 +10,10 @@ class DBClient {
   constructor() {
     this.db = null;
     MongoClient.connect(url, { useUnifiedTopology: true })
-      .then((client) => {
+      .then(async (client) => {
         this.db = client.db(database);
-        this.initCollections(['users', 'files']);
+        await this.createCollectionIfNotExists('users');
+        await this.createCollectionIfNotExists('files');
       })
       .catch((error) => console.error(`Cannot connect to MongoDB: ${error.message}`));
   }
@@ -31,6 +32,11 @@ class DBClient {
    * @returns {Promise<number>} The number of documents in the collection.
    */
   async nbDocuments(collectionName) {
+    if (!this.db) {
+      console.error('Database connection is not established.');
+      return 0;
+    }
+
     return this.db
       .collection(collectionName)
       .countDocuments()
@@ -59,19 +65,17 @@ class DBClient {
   }
 
   /**
-   * Initializes collections if they do not already exist.
-   * @param {string[]} collections - The names of the collections to initialize.
+   * Creates a collection if it does not already exist.
+   * @param {string} collectionName - The name of the collection to create.
    * @returns {Promise<void>}
    */
-  async initCollections(collections) {
-    const existingCollections = await this.db.listCollections().toArray();
-    const existingNames = new Set(existingCollections.map((c) => c.name));
-
-    await Promise.all(
-      collections.map((name) => (existingNames.has(name)
-        ? Promise.resolve()
-        : this.db.createCollection(name))),
-    );
+  async createCollectionIfNotExists(collectionName) {
+    const collections = await this.db
+      .listCollections({ name: collectionName })
+      .toArray();
+    if (collections.length === 0) {
+      await this.db.createCollection(collectionName);
+    }
   }
 }
 
