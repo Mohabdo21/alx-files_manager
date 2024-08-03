@@ -31,11 +31,6 @@ class DBClient {
    * @returns {Promise<number>} The number of documents in the collection.
    */
   async nbDocuments(collectionName) {
-    if (!this.db) {
-      console.error('Database connection is not established.');
-      return 0;
-    }
-
     return this.db
       .collection(collectionName)
       .countDocuments()
