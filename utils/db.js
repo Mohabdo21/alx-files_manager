@@ -58,7 +58,13 @@ class DBClient {
    */
   async initCollections(collections) {
     await Promise.all(
-      collections.map((coll) => this.db.createCollection(coll)),
+      collections.map((coll) => {
+        try {
+          return this.db.createCollection(coll);
+        } catch (err) {
+          return Promise.resolve();
+        }
+      }),
     )
       .then((res) => console.log({ res }))
       .catch((err) => console.error({ err }));
@@ -98,34 +104,6 @@ class DBClient {
       ops: [newDocument],
     } = await this.db.collection(collectionName).insertOne(document);
     return newDocument;
-  }
-
-  /**
-   * Deletes a single document from the specified collection.
-   * @param {string} collectionName - The name of the collection.
-   * @param {Object} query - The query object to match the document.
-   * @returns {Promise<Object>} The result of the delete operation.
-   */
-  async deleteOne(collectionName, query) {
-    if (!this.db) throw new Error('Database not connected');
-    const result = await this.db.collection(collectionName).deleteOne(query);
-    return result;
-  }
-
-  /**
-   * Updates a single document in the specified collection.
-   * @param {string} collectionName - The name of the collection.
-   * @param {Object} query - The query object to match the document.
-   * @param {Object} update - The update object to apply.
-   * @param {Object} [options] - Additional options for the update operation.
-   * @returns {Promise<Object>} The result of the update operation.
-   */
-  async updateOne(collectionName, query, update, options = {}) {
-    if (!this.db) throw new Error('Database not connected');
-    const result = await this.db
-      .collection(collectionName)
-      .updateOne(query, update, options);
-    return result;
   }
 }
 
