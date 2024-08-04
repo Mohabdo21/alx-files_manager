@@ -57,14 +57,21 @@ class DBClient {
    * @returns {Promise<void>}
    */
   async initCollections(collections) {
-    const existingCollections = await this.db.listCollections().toArray();
-    const existingNames = new Set(existingCollections.map((c) => c.name));
-
     await Promise.all(
-      collections.map((name) => (existingNames.has(name)
-        ? Promise.resolve()
-        : this.db.createCollection(name))),
-    );
+      collections.map((coll) => this.db.createCollection(coll)),
+    )
+      .then((res) => console.log({ res }))
+      .catch((err) => console.error({ err }));
+    /**
+     *     const existingCollections = await this.db.listCollections().toArray();
+     *     const existingNames = new Set(existingCollections.map((c) => c.name));
+     *
+     *     await Promise.all(
+     *       collections.map((name) => (existingNames.has(name)
+     *         ? Promise.resolve()
+     *         : this.db.createCollection(name))),
+     *     );
+     */
   }
 
   /**
