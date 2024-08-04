@@ -57,7 +57,7 @@ class DBClient {
    * @returns {Promise<void>}
    */
   async initCollections(collections) {
-    await Promise.all(
+    /* await Promise.all(
       collections.map((coll) => {
         try {
           return this.db.createCollection(coll);
@@ -67,17 +67,22 @@ class DBClient {
       }),
     )
       .then((res) => console.log({ res }))
-      .catch((err) => console.error({ err }));
-    /**
-     *     const existingCollections = await this.db.listCollections().toArray();
-     *     const existingNames = new Set(existingCollections.map((c) => c.name));
-     *
-     *     await Promise.all(
-     *       collections.map((name) => (existingNames.has(name)
-     *         ? Promise.resolve()
-     *         : this.db.createCollection(name))),
-     *     );
-     */
+      .catch((err) => console.error({ err })); */
+    try {
+      const existingCollections = await this.db.listCollections().toArray();
+      const existingNames = new Set(existingCollections.map((c) => c.name));
+      const collectionsToCreate = collections.filter(
+        (name) => !existingNames.has(name),
+      );
+
+      if (collectionsToCreate.length > 0) {
+        await Promise.all(
+          collectionsToCreate.map((name) => this.db.createCollection(name)),
+        );
+      }
+    } catch (error) {
+      console.error(`Error initializing collections: ${error.message}`);
+    }
   }
 
   /**
