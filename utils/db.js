@@ -15,7 +15,7 @@ class DBClient {
         this.db = client.db(database);
         this.initCollections(['users', 'files']);
       } else {
-        this.db = null;
+        this.db = false;
         console.error(`Cannot connect to MongoDB: ${error.message}`);
       }
     });
