@@ -130,10 +130,10 @@ class FilesController {
         name: file.name,
         type: file.type,
         isPublic: file.isPublic,
-        parentId: file.parentId === '0' ? 0 : file.parentId,
+        parentId: file.parentId,
       });
     } catch (error) {
-      console.error(error.message);
+      console.error(error);
       return res.status(500).json({ error: 'Server error' });
     }
   }
@@ -145,42 +145,34 @@ class FilesController {
    * @returns {Promise<void>}
    */
   static async getIndex(req, res) {
-    const { parentId = 0, page = 0 } = req.query;
     const token = req.header('X-Token');
+    const { parentId = '0', page = 0 } = req.query;
 
     try {
       const user = await UserController.verifyUser(token);
       if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-      const itemsPerPage = 20;
-      const skip = parseInt(page, 10) * itemsPerPage;
-
-      const files = await dbClient.aggregate('files', [
-        { $match: { parentId, userId: user._id } },
-        { $skip: skip },
-        { $limit: itemsPerPage },
+      const pipeline = [
+        { $match: { userId: user._id, parentId } },
+        { $skip: parseInt(page, 10) * 20 },
+        { $limit: 20 },
         {
           $project: {
             _id: 0,
             id: '$_id',
-            userId: '$userId',
-            name: '$name',
-            type: '$type',
-            isPublic: '$isPublic',
-            parentId: {
-              $cond: {
-                if: { $eq: ['$parentId', '0'] },
-                then: 0,
-                else: '$parentId',
-              },
-            },
+            userId: 1,
+            name: 1,
+            type: 1,
+            isPublic: 1,
+            parentId: 1,
           },
         },
-      ]);
+      ];
 
+      const files = await dbClient.aggregate('files', pipeline);
       return res.status(200).json(files);
     } catch (error) {
-      console.error(error.message);
+      console.error(error);
       return res.status(500).json({ error: 'Server error' });
     }
   }
