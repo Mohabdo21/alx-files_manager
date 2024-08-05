@@ -16,7 +16,10 @@ class AuthController {
    */
   static async getConnect(req, res) {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Basic ')) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (!authHeader || !authHeader.startsWith('Basic ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     const [email, password] = Buffer.from(authHeader.split(' ')[1], 'base64')
       .toString('utf-8')
@@ -46,7 +49,8 @@ class AuthController {
    */
   static async getDisconnect(req, res) {
     const token = req.header('X-Token');
-    if (!token || !(await redisClient.get(`auth_${token}`))) return res.status(401).json({ error: 'Unauthorized' });
+    const isValid = await redisClient.get(`auth_${token}`);
+    if (!isValid) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
       await redisClient.del(`auth_${token}`);
