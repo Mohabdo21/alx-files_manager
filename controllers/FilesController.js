@@ -117,12 +117,21 @@ class FilesController {
       const user = await UserController.verifyUser(token);
       if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-      const file = await dbClient.findOne('files', { _id: new ObjectId(id) });
-      if (!file || file.userId.toString() !== user._id.toString()) {
-        return res.status(404).json({ error: 'Not found' });
-      }
+      const file = await dbClient.findOne('files', {
+        _id: new ObjectId(id),
+        userId: user._id,
+      });
 
-      return res.status(200).json(file);
+      if (!file) return res.status(404).json({ error: 'Not found' });
+
+      return res.status(200).json({
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId === '0' ? 0 : file.parentId,
+      });
     } catch (error) {
       console.error(error.message);
       return res.status(500).json({ error: 'Server error' });
