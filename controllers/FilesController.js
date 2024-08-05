@@ -146,11 +146,20 @@ class FilesController {
       const itemsPerPage = 20;
       const skip = parseInt(page, 10) * itemsPerPage;
 
-      const files = await dbClient.aggregate('files', [
-        { $match: { parentId, userId: user._id } },
-        { $skip: skip },
-        { $limit: itemsPerPage },
-      ]);
+      // const files = await dbClient.aggregate('files', [
+      //   { $match: { parentId, userId: user._id } },
+      //   { $skip: skip },
+      //   { $limit: itemsPerPage },
+      // ]);
+
+      const files = await dbClient.db
+        .collection('files')
+        .aggregate([
+          { $match: { parentId, userId: user._id } },
+          { $skip: skip },
+          { $limit: itemsPerPage },
+        ])
+        .toArray();
 
       return res.status(200).json(files);
     } catch (error) {
