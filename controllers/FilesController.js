@@ -102,6 +102,62 @@ class FilesController {
       return res.status(statusCode).json({ error: errorMessage });
     }
   }
+
+  /**
+   * Retrieves a single file document based on the ID.
+   * @param {Object} req - The request object.
+   * @param {Object} res - The response object.
+   * @returns {Promise<void>}
+   */
+  static async getShow(req, res) {
+    const { id } = req.params;
+    const token = req.header('X-Token');
+
+    try {
+      const user = await UserController.verifyUser(token);
+      if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+      const file = await dbClient.findOne('files', { _id: new ObjectId(id) });
+      if (!file || file.userId.toString() !== user._id.toString()) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+
+      return res.status(200).json(file);
+    } catch (error) {
+      console.error(error.message);
+      return res.status(500).json({ error: 'Server error' });
+    }
+  }
+
+  /**
+   * Retrieves all file documents for a specific parentId with pagination.
+   * @param {Object} req - The request object.
+   * @param {Object} res - The response object.
+   * @returns {Promise<void>}
+   */
+  static async getIndex(req, res) {
+    const { parentId = 0, page = 0 } = req.query;
+    const token = req.header('X-Token');
+
+    try {
+      const user = await UserController.verifyUser(token);
+      if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+      const itemsPerPage = 20;
+      const skip = parseInt(page, 10) * itemsPerPage;
+
+      const files = await dbClient.aggregate('files', [
+        { $match: { parentId, userId: user._id } },
+        { $skip: skip },
+        { $limit: itemsPerPage },
+      ]);
+
+      return res.status(200).json(files);
+    } catch (error) {
+      console.error(error.message);
+      return res.status(500).json({ error: 'Server error' });
+    }
+  }
 }
 
 export default FilesController;

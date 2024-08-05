@@ -138,6 +138,17 @@ class DBClient {
       .updateOne(query, update, options);
     return result;
   }
+
+  /**
+   * Performs an aggregation operation on a specified collection.
+   * @param {string} collectionName - The name of the collection.
+   * @param {Object[]} pipeline - The aggregation pipeline stages.
+   * @returns {Promise<Object[]>} The aggregation result.
+   */
+  async aggregate(collectionName, pipeline) {
+    if (!this.db) throw new Error('Database not connected');
+    return this.db.collection(collectionName).aggregate(pipeline).toArray();
+  }
 }
 
 const dbClient = new DBClient();

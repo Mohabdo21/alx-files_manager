@@ -51,4 +51,16 @@ routes.get('/disconnect', AuthController.getDisconnect);
  */
 routes.post('/files', FilesController.postUpload);
 
+/**
+ * Route to retrieve the file document based on the ID.
+ * @name get/files/:id
+ */
+routes.get('/files/:id', FilesController.getShow);
+
+/**
+ * Route to retrieve all users file documents for a specific parentId and with pagination.
+ * @name post/files
+ */
+routes.get('/files', FilesController.getIndex);
+
 export default routes;
