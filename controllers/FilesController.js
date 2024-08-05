@@ -159,6 +159,23 @@ class FilesController {
         { $match: { parentId, userId: user._id } },
         { $skip: skip },
         { $limit: itemsPerPage },
+        {
+          $project: {
+            _id: 0,
+            id: '$_id',
+            userId: '$userId',
+            name: '$name',
+            type: '$type',
+            isPublic: '$isPublic',
+            parentId: {
+              $cond: {
+                if: { $eq: ['$parentId', '0'] },
+                then: 0,
+                else: '$parentId',
+              },
+            },
+          },
+        },
       ]);
 
       return res.status(200).json(files);
