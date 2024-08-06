@@ -139,7 +139,7 @@ class FilesController {
    */
   static async getIndex(req, res) {
     const token = req.header('X-Token');
-    const { parentId = '0', page = 0 } = req.query;
+    const { parentId = 0, page = 0 } = req.query;
 
     try {
       const user = await UserController.verifyUser(token);
