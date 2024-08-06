@@ -145,8 +145,16 @@ class FilesController {
       const user = await UserController.verifyUser(token);
       if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
+      const mathCondition = {
+        userId: user._id,
+      };
+
+      if (parentId) {
+        mathCondition.parentId = parentId;
+      }
+
       const pipeline = [
-        { $match: { userId: user._id, parentId } },
+        { $match: mathCondition },
         { $skip: parseInt(page, 10) * 20 },
         { $limit: 20 },
         {
