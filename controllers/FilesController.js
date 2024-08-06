@@ -189,11 +189,11 @@ class FilesController {
    * @returns {Promise<any>}
    */
   static async putPublish(req, res) {
-    const token = req.header('X-Token');
     const { id } = req.params;
+    const token = req.header('X-Token');
 
     try {
-      const user = UserController.verifyUser(token);
+      const user = await UserController.verifyUser(token);
 
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -207,13 +207,21 @@ class FilesController {
       if (!file) return res.status(404).json({ error: 'Not found' });
 
       const query = { _id: new ObjectId(id) };
-      const update = { isPublic: true };
-      const updated = await dbClient.updateOne('files', query, update);
-      const { _id, localPath, ...resp } = updated;
+      const update = { $set: { isPublic: true } };
+      // returns some info about the operation, such as number of docuemnts,
+      // matched and modified.
+      await dbClient.updateOne('files', query, update);
+      // since the operation is success, no need to make another,
+      // DB query.
+      const {
+        _id, localPath, isPublic, ...resp
+      } = file;
       resp.id = _id;
+      resp.isPublic = !file.isPublic;
 
       return res.status(200).json(resp);
     } catch (err) {
+      console.error({ err });
       return res.status(500).json({ error: 'unexpected error' });
     }
   }
@@ -230,7 +238,7 @@ class FilesController {
     const { id } = req.params;
 
     try {
-      const user = UserController.verifyUser(token);
+      const user = await UserController.verifyUser(token);
 
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -244,13 +252,15 @@ class FilesController {
       if (!file) return res.status(404).json({ error: 'Not found' });
 
       const query = { _id: new ObjectId(id) };
-      const update = { isPublic: false };
-      const updated = await dbClient.updateOne('files', query, update);
-      const { _id, localPath, ...resp } = updated;
+      const update = { $set: { isPublic: false } };
+      await dbClient.updateOne('files', query, update);
+      const { _id, localPath, ...resp } = file;
       resp.id = _id;
+      resp.isPublic = !file.isPublic;
 
       return res.status(200).json(resp);
     } catch (err) {
+      console.error({ err });
       return res.status(500).json({ error: 'unexpected error' });
     }
   }
