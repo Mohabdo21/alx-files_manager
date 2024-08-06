@@ -126,7 +126,7 @@ class FilesController {
 
       return res.status(200).json(file);
     } catch (error) {
-      console.error(error);
+      console.error(error.message);
       return res.status(500).json({ error: 'Server error' });
     }
   }
@@ -158,6 +158,7 @@ class FilesController {
             type: 1,
             isPublic: 1,
             parentId: 1,
+            localPath: 1,
           },
         },
       ];
@@ -165,7 +166,7 @@ class FilesController {
       const files = await dbClient.aggregate('files', pipeline);
       return res.status(200).json(files);
     } catch (error) {
-      console.error(error);
+      console.error(error.message);
       return res.status(500).json({ error: 'Server error' });
     }
   }
