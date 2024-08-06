@@ -194,20 +194,19 @@ class FilesController {
 
     try {
       const user = await UserController.verifyUser(token);
+      const query = { _id: new ObjectId(id) };
+      const update = { $set: { isPublic: true } };
 
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const file = await dbClient.findOne('files', {
-        _id: new ObjectId(id),
-        userId: user._id,
-      });
+      query.userId = user._id;
+
+      const file = await dbClient.findOne('files', query);
 
       if (!file) return res.status(404).json({ error: 'Not found' });
 
-      const query = { _id: new ObjectId(id) };
-      const update = { $set: { isPublic: true } };
       // returns some info about the operation, such as number of docuemnts,
       // matched and modified.
       await dbClient.updateOne('files', query, update);
@@ -217,7 +216,7 @@ class FilesController {
         _id, localPath, isPublic, ...resp
       } = file;
       resp.id = _id;
-      resp.isPublic = !file.isPublic;
+      resp.isPublic = true;
 
       return res.status(200).json(resp);
     } catch (err) {
@@ -239,24 +238,22 @@ class FilesController {
 
     try {
       const user = await UserController.verifyUser(token);
+      const query = { _id: new ObjectId(id) };
+      const update = { $set: { isPublic: false } };
 
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const file = await dbClient.findOne('files', {
-        _id: new ObjectId(id),
-        userId: user._id,
-      });
+      query.userId = user._id;
+      const file = await dbClient.findOne('files', query);
 
       if (!file) return res.status(404).json({ error: 'Not found' });
 
-      const query = { _id: new ObjectId(id) };
-      const update = { $set: { isPublic: false } };
       await dbClient.updateOne('files', query, update);
       const { _id, localPath, ...resp } = file;
       resp.id = _id;
-      resp.isPublic = !file.isPublic;
+      resp.isPublic = false;
 
       return res.status(200).json(resp);
     } catch (err) {
