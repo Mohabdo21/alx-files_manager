@@ -63,4 +63,16 @@ routes.get('/files/:id', FilesController.getShow);
  */
 routes.get('/files', FilesController.getIndex);
 
+/**
+ * Route to publish a file based on its ID
+ * @name /files/:id/publish
+ */
+routes.put('/files/:id/publish', FilesController.putPublish);
+
+/**
+ * Route to un-publish a file based on its ID
+ * @name /files/:id/publish
+ */
+routes.put('/files/:id/unpublish', FilesController.putUnpublish);
+
 export default routes;
