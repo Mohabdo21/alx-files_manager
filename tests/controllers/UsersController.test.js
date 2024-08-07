@@ -1,41 +1,55 @@
 /* eslint-disable no-undef, jest/prefer-expect-assertions, jest/valid-expect, no-unused-expressions */
 import chai from 'chai';
 import chaiHttp from 'chai-http';
-import { MongoClient } from 'mongodb';
 import redisClient from '../../utils/redis';
+import dbClient from '../../utils/db';
 import app from '../../server';
 
 const { expect } = chai;
 
 chai.use(chaiHttp);
 
-let mongoClient;
+// Helper function to wait for the database to be connected
+const waitForDbConnection = async (timeout = 5000) => {
+  const start = Date.now();
+  while (!dbClient.isAlive()) {
+    if (Date.now() - start > timeout) {
+      throw new Error('Database client did not connect in time');
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+};
 
 before(async () => {
-  mongoClient = await MongoClient.connect(
-    'mongodb://localhost:27017/files_manager_test',
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    },
-  );
-  const db = mongoClient.db('files_manager_test');
+  try {
+    await waitForDbConnection();
 
-  await db.collection('users').deleteMany({});
-  await db.collection('files').deleteMany({});
+    await dbClient.deleteOne('users', {});
+    await dbClient.deleteOne('files', {});
 
-  // Flush all keys in Redis
-  await redisClient.flushallAsync();
+    // Flush all keys in Redis
+    await redisClient.flushallAsync();
+  } catch (error) {
+    console.error('Setup error:', error);
+    throw error;
+  }
 });
 
 after(async () => {
-  await mongoClient.close();
-  await redisClient.quitAsync();
+  try {
+    await redisClient.quitAsync();
+  } catch (error) {
+    console.error('Teardown error:', error);
+    throw error;
+  }
 });
 
 describe('usersController Integration Tests', () => {
   it('should create a new user with valid data', async () => {
-    const newUser = { email: 'mohannadabdo21@gmail.com', password: 'password12345' };
+    const newUser = {
+      email: 'mohannadabdo21@gmail.com',
+      password: 'password12345',
+    };
 
     const res = await chai.request(app).post('/users').send(newUser);
 
@@ -43,8 +57,7 @@ describe('usersController Integration Tests', () => {
     expect(res.body).to.have.keys('id', 'email');
     expect(res.body.email).to.equal(newUser.email);
 
-    const db = mongoClient.db('files_manager_test');
-    const user = await db.collection('users').findOne({ email: newUser.email });
+    const user = await dbClient.findOne('users', { email: newUser.email });
     expect(user).to.not.be.null;
     expect(user.email).to.equal(newUser.email);
   });
@@ -81,7 +94,10 @@ describe('usersController Integration Tests', () => {
   });
 
   it('should retrieve user details for authenticated users', async () => {
-    const newUser = { email: 'mohannadabdo21@outlook.com', password: 'password123' };
+    const newUser = {
+      email: 'mohannadabdo21@outlook.com',
+      password: 'password123',
+    };
     await chai.request(app).post('/users').send(newUser);
 
     const authHeader = Buffer.from(
