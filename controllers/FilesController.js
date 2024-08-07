@@ -261,35 +261,30 @@ class FilesController {
   static async getFile(req, res) {
     const { id } = req.params;
     const token = req.header('X-Token');
+    const file = await dbClient.findOne('files', { _id: new ObjectId(id) });
 
-    try {
-      const file = await dbClient.findOne('files', { _id: new ObjectId(id) });
-      if (!file) return res.status(404).json({ error: 'Not found' });
+    if (!file) return res.status(404).json({ error: 'Not found' });
 
-      if (!file.isPublic) {
-        const user = await UserController.verifyUser(token);
-        if (!user || user._id.toString() !== file.userId.toString()) {
-          return res.status(404).json({ error: 'Not found' });
-        }
-      }
-
-      if (file.type === 'folder') {
-        return res.status(400).json({ error: "A folder doesn't have content" });
-      }
-
-      if (!fs.existsSync(file.localPath)) {
+    if (!file.isPublic) {
+      const user = await UserController.verifyUser(token);
+      if (!user || user._id.toString() !== file.userId.toString()) {
         return res.status(404).json({ error: 'Not found' });
       }
-
-      const mimeType = mime.lookup(file.name);
-      res.setHeader('Content-Type', mimeType);
-
-      const fileContent = fs.readFileSync(file.localPath);
-      return res.status(200).send(fileContent);
-    } catch (err) {
-      console.error({ err });
-      return res.status(500).json({ error: 'Unexpected error' });
     }
+
+    if (file.type === 'folder') {
+      return res.status(400).json({ error: "A folder doesn't have content" });
+    }
+
+    if (!fs.existsSync(file.localPath)) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const mimeType = mime.lookup(file.name);
+    res.setHeader('Content-Type', mimeType);
+
+    const fileContent = fs.readFileSync(file.localPath);
+    return res.status(200).send(fileContent);
   }
 }
 
