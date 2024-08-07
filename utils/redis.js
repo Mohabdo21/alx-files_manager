@@ -10,6 +10,8 @@ class RedisClient {
     this.getAsync = promisify(this.client.get).bind(this.client);
     this.setAsync = promisify(this.client.setex).bind(this.client);
     this.delAsync = promisify(this.client.del).bind(this.client);
+    this.flushallAsync = promisify(this.client.flushall).bind(this.client);
+    this.quitAsync = promisify(this.client.quit).bind(this.client);
 
     this.client.on('error', (error) => {
       console.error(`Cannot connect to the Redis client: ${error.message}`);
