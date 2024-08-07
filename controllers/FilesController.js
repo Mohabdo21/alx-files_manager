@@ -289,7 +289,7 @@ class FilesController {
 
     const mimeType = mime.lookup(file.name);
     res.setHeader('Content-Type', mimeType);
-    const fileContent = fs.readFileSync(file.localPath);
+    const fileContent = fs.readFileSync(file.localPath, 'utf8');
     return res.status(200).send(fileContent);
   }
 }
