@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
+import mime from 'mime-types';
 import path from 'path';
 import { ObjectId } from 'mongodb';
 import UserController from './UsersController';
@@ -229,9 +230,9 @@ class FilesController {
   static async putUnpublish(req, res) {
     const token = req.header('X-Token');
     const { id } = req.params;
-    const user = await UserController.verifyUser(token);
     const query = { _id: new ObjectId(id) };
     const update = { $set: { isPublic: false } };
+    const user = await UserController.verifyUser(token);
 
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -251,12 +252,45 @@ class FilesController {
   }
 
   /**
-   * TODO:
+   * Return content of the file document based on the ID
+   * @param {Object} req - The request object.
+   * @param {Object} res - The request object.
    *
-   *
+   * @returns {Promise<any>} content of a file promisified
    */
   static async getFile(req, res) {
-    return '';
+    const token = req.header('X-Token');
+    const { id } = req.params;
+    const query = { _id: new ObjectId(id) };
+    const user = await UserController.verifyUser(token);
+    const file = await dbClient.findOne('files', query);
+
+    if (!file || !fs.existsSync(file.localPath)) {
+      // file not found
+      console.log('-------file existence------>');
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    if (!user && !file.isPublic) {
+      console.log('--------private file----->');
+      // private file
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    if (user && user._id.toString() !== file.userId.toString()) {
+      console.log('--------ownership----->', user._id, file.userId);
+      // not the owner
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    if (file.type === 'folder') {
+      return res.status(400).json({ error: 'A folder doesn\'t have content' });
+    }
+
+    const mimeType = mime.lookup(file.name);
+    res.setHeader('Content-Type', mimeType);
+    const fileContent = fs.readFileSync(file.localPath);
+    return res.status(200).send(fileContent);
   }
 }
 

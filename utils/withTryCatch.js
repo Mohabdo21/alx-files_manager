@@ -1,3 +1,10 @@
+/**
+ * helper function to handle promises properly
+ * @param {(req: Object, res: Object) => Promise<any>} promise - callback function returns a promise
+ *
+ * @returns {(req: Object, res: Object) => Promise<any>}
+ * asyncronous function with error handling for unexepected error
+ */
 function withTryCatch(promise) {
   return async (req, res) => {
     try {
