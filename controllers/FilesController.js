@@ -259,38 +259,37 @@ class FilesController {
    * @returns {Promise<any>} content of a file promisified
    */
   static async getFile(req, res) {
-    const token = req.header('X-Token');
     const { id } = req.params;
-    const query = { _id: new ObjectId(id) };
-    const user = await UserController.verifyUser(token);
-    const file = await dbClient.findOne('files', query);
+    const token = req.header('X-Token');
 
-    if (!file || !fs.existsSync(file.localPath)) {
-      // file not found
-      console.log('-------file existence------>');
-      return res.status(404).json({ error: 'Not found' });
+    try {
+      const file = await dbClient.findOne('files', { _id: new ObjectId(id) });
+      if (!file) return res.status(404).json({ error: 'Not found' });
+
+      if (!file.isPublic) {
+        const user = await UserController.verifyUser(token);
+        if (!user || user._id.toString() !== file.userId.toString()) {
+          return res.status(404).json({ error: 'Not found' });
+        }
+      }
+
+      if (file.type === 'folder') {
+        return res.status(400).json({ error: "A folder doesn't have content" });
+      }
+
+      if (!fs.existsSync(file.localPath)) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+
+      const mimeType = mime.lookup(file.name);
+      res.setHeader('Content-Type', mimeType);
+
+      const fileContent = fs.readFileSync(file.localPath);
+      return res.status(200).send(fileContent);
+    } catch (err) {
+      console.error({ err });
+      return res.status(500).json({ error: 'Unexpected error' });
     }
-
-    if (!user && !file.isPublic) {
-      console.log('--------private file----->');
-      // private file
-      return res.status(404).json({ error: 'Not found' });
-    }
-
-    if (user && user._id.toString() !== file.userId.toString()) {
-      console.log('--------ownership----->', user._id, file.userId);
-      // not the owner
-      return res.status(404).json({ error: 'Not found' });
-    }
-
-    if (file.type === 'folder') {
-      return res.status(400).json({ error: 'A folder doesn\'t have content' });
-    }
-
-    const mimeType = mime.lookup(file.name);
-    res.setHeader('Content-Type', mimeType);
-    const fileContent = fs.readFileSync(file.localPath, 'utf8');
-    return res.status(200).send(fileContent);
   }
 }
 

@@ -80,6 +80,6 @@ routes.put('/files/:id/unpublish', withTryCatch(FilesController.putUnpublish));
  * Route to return the content of the file document based on the ID
  * @name /files/:id/data
  */
-routes.get('/files/:id/data', withTryCatch(FilesController.getFile));
+routes.get('/files/:id/data', (FilesController.getFile));
 
 export default routes;
