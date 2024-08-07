@@ -1,12 +1,10 @@
 /* eslint-disable no-undef, jest/prefer-expect-assertions, jest/valid-expect, no-unused-expressions */
 import chai from 'chai';
 import chaiHttp from 'chai-http';
-import redis from 'redis';
 import { MongoClient } from 'mongodb';
 import redisClient from '../../utils/redis';
 import app from '../../server';
 
-const redisInstance = redis.createClient();
 const { expect } = chai;
 
 chai.use(chaiHttp);
@@ -32,7 +30,7 @@ before(async () => {
 
 after(async () => {
   await mongoClient.close();
-  redisInstance.quit();
+  await redisClient.quitAsync();
 });
 
 describe('usersController Integration Tests', () => {
