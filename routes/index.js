@@ -3,6 +3,7 @@ import AppController from '../controllers/AppController';
 import UserController from '../controllers/UsersController';
 import AuthController from '../controllers/AuthController';
 import FilesController from '../controllers/FilesController';
+import withTryCatch from '../utils/withTryCatch';
 
 const routes = Router();
 
@@ -67,5 +68,23 @@ routes.get('/files/:id', FilesController.getShow);
  * @name post/files
  */
 routes.get('/files', FilesController.getIndex);
+
+/**
+ * Route to publish a file based on its ID
+ * @name /files/:id/publish
+ */
+routes.put('/files/:id/publish', withTryCatch(FilesController.putPublish));
+
+/**
+ * Route to un-publish a file based on its ID
+ * @name /files/:id/publish
+ */
+routes.put('/files/:id/unpublish', withTryCatch(FilesController.putUnpublish));
+
+/**
+ * Route to return the content of the file document based on the ID
+ * @name /files/:id/data
+ */
+routes.get('/files/:id/data', withTryCatch(FilesController.getFile));
 
 export default routes;

@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
+import mime from 'mime-types';
 import path from 'path';
 import { ObjectId } from 'mongodb';
 import UserController from './UsersController';
@@ -123,8 +124,10 @@ class FilesController {
       });
 
       if (!file) return res.status(404).json({ error: 'Not found' });
+      const { localPath, _id, ...resp } = file;
+      resp.id = _id;
 
-      return res.status(200).json(file);
+      return res.status(200).json(resp);
     } catch (error) {
       console.error(error.message);
       return res.status(500).json({ error: 'Server error' });
@@ -177,6 +180,111 @@ class FilesController {
       console.error(error.message);
       return res.status(500).json({ error: 'Server error' });
     }
+  }
+
+  /**
+   * Set isPublic to true on the file document based on the ID
+   * @param {Object} req - The request object.
+   * @param {Object} res - The request object.
+   *
+   * @returns {Promise<any>}
+   */
+  static async putPublish(req, res) {
+    const { id } = req.params;
+    const token = req.header('X-Token');
+    const user = await UserController.verifyUser(token);
+    const query = { _id: new ObjectId(id) };
+    const update = { $set: { isPublic: true } };
+
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    query.userId = user._id;
+
+    const file = await dbClient.findOne('files', query);
+
+    if (!file) return res.status(404).json({ error: 'Not found' });
+
+    // returns some info about the operation, such as number of docuemnts,
+    // matched and modified.
+    await dbClient.updateOne('files', query, update);
+    // since the operation is success, no need to make another,
+    // DB query.
+    const {
+      _id, localPath, isPublic, ...resp
+    } = file;
+    resp.id = _id;
+    resp.isPublic = true;
+
+    return res.status(200).json(resp);
+  }
+
+  /**
+   * Set isPublic to false on the file document based on the ID
+   * @param {Object} req - The request object.
+   * @param {Object} res - The request object.
+   *
+   * @returns {Promise<any>}
+   */
+  static async putUnpublish(req, res) {
+    const token = req.header('X-Token');
+    const { id } = req.params;
+    const query = { _id: new ObjectId(id) };
+    const update = { $set: { isPublic: false } };
+    const user = await UserController.verifyUser(token);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    query.userId = user._id;
+    const file = await dbClient.findOne('files', query);
+
+    if (!file) return res.status(404).json({ error: 'Not found' });
+
+    await dbClient.updateOne('files', query, update);
+    const { _id, localPath, ...resp } = file;
+    resp.id = _id;
+    resp.isPublic = false;
+
+    return res.status(200).json(resp);
+  }
+
+  /**
+   * Return content of the file document based on the ID
+   * @param {Object} req - The request object.
+   * @param {Object} res - The request object.
+   *
+   * @returns {Promise<any>} content of a file promisified
+   */
+  static async getFile(req, res) {
+    const { id } = req.params;
+    const token = req.header('X-Token');
+    const file = await dbClient.findOne('files', { _id: new ObjectId(id) });
+
+    if (!file) return res.status(404).json({ error: 'Not found' });
+
+    if (!file.isPublic) {
+      const user = await UserController.verifyUser(token);
+      if (!user || user._id.toString() !== file.userId.toString()) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+    }
+
+    if (file.type === 'folder') {
+      return res.status(400).json({ error: "A folder doesn't have content" });
+    }
+
+    if (!fs.existsSync(file.localPath)) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const mimeType = mime.lookup(file.name);
+    res.setHeader('Content-Type', mimeType);
+
+    const fileContent = fs.readFileSync(file.localPath);
+    return res.status(200).send(fileContent);
   }
 }
 
