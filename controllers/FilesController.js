@@ -191,38 +191,32 @@ class FilesController {
   static async putPublish(req, res) {
     const { id } = req.params;
     const token = req.header('X-Token');
+    const user = await UserController.verifyUser(token);
+    const query = { _id: new ObjectId(id) };
+    const update = { $set: { isPublic: true } };
 
-    try {
-      const user = await UserController.verifyUser(token);
-      const query = { _id: new ObjectId(id) };
-      const update = { $set: { isPublic: true } };
-
-      if (!user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      query.userId = user._id;
-
-      const file = await dbClient.findOne('files', query);
-
-      if (!file) return res.status(404).json({ error: 'Not found' });
-
-      // returns some info about the operation, such as number of docuemnts,
-      // matched and modified.
-      await dbClient.updateOne('files', query, update);
-      // since the operation is success, no need to make another,
-      // DB query.
-      const {
-        _id, localPath, isPublic, ...resp
-      } = file;
-      resp.id = _id;
-      resp.isPublic = true;
-
-      return res.status(200).json(resp);
-    } catch (err) {
-      console.error({ err });
-      return res.status(500).json({ error: 'unexpected error' });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
+
+    query.userId = user._id;
+
+    const file = await dbClient.findOne('files', query);
+
+    if (!file) return res.status(404).json({ error: 'Not found' });
+
+    // returns some info about the operation, such as number of docuemnts,
+    // matched and modified.
+    await dbClient.updateOne('files', query, update);
+    // since the operation is success, no need to make another,
+    // DB query.
+    const {
+      _id, localPath, isPublic, ...resp
+    } = file;
+    resp.id = _id;
+    resp.isPublic = true;
+
+    return res.status(200).json(resp);
   }
 
   /**
@@ -235,31 +229,34 @@ class FilesController {
   static async putUnpublish(req, res) {
     const token = req.header('X-Token');
     const { id } = req.params;
+    const user = await UserController.verifyUser(token);
+    const query = { _id: new ObjectId(id) };
+    const update = { $set: { isPublic: false } };
 
-    try {
-      const user = await UserController.verifyUser(token);
-      const query = { _id: new ObjectId(id) };
-      const update = { $set: { isPublic: false } };
-
-      if (!user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      query.userId = user._id;
-      const file = await dbClient.findOne('files', query);
-
-      if (!file) return res.status(404).json({ error: 'Not found' });
-
-      await dbClient.updateOne('files', query, update);
-      const { _id, localPath, ...resp } = file;
-      resp.id = _id;
-      resp.isPublic = false;
-
-      return res.status(200).json(resp);
-    } catch (err) {
-      console.error({ err });
-      return res.status(500).json({ error: 'unexpected error' });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
+
+    query.userId = user._id;
+    const file = await dbClient.findOne('files', query);
+
+    if (!file) return res.status(404).json({ error: 'Not found' });
+
+    await dbClient.updateOne('files', query, update);
+    const { _id, localPath, ...resp } = file;
+    resp.id = _id;
+    resp.isPublic = false;
+
+    return res.status(200).json(resp);
+  }
+
+  /**
+   * TODO:
+   *
+   *
+   */
+  static async getFile(req, res) {
+    return '';
   }
 }
 
