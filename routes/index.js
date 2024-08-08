@@ -7,6 +7,11 @@ import withTryCatch from '../utils/withTryCatch';
 
 const routes = Router();
 
+// Root path route for testing
+routes.get('/', (req, res) => {
+  res.status(200).send('Server is running');
+});
+
 // Application status routes
 /**
  * Route to get the status of the application.
