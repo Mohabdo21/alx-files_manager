@@ -3,6 +3,7 @@ import fs from 'fs';
 import mime from 'mime-types';
 import path from 'path';
 import { ObjectId } from 'mongodb';
+import Bull from 'bull';
 import UserController from './UsersController';
 import dbClient from '../utils/db';
 
@@ -77,6 +78,12 @@ class FilesController {
       };
 
       const newFile = await dbClient.saveOne('files', file);
+
+      if (file.type === 'image') {
+        // add image job to the queue
+        const fileQueue = Bull('fileQueue');
+        fileQueue.add({ userId: user._id, fileId: newFile._id.toString() });
+      }
 
       return res.status(201).json({
         id: newFile._id,
@@ -260,10 +267,13 @@ class FilesController {
    */
   static async getFile(req, res) {
     const { id } = req.params;
+    const { size } = req.query;
     const token = req.header('X-Token');
     const file = await dbClient.findOne('files', { _id: new ObjectId(id) });
+    let filePath = '';
 
     if (!file) return res.status(404).json({ error: 'Not found' });
+    filePath = file.localPath;
 
     if (!file.isPublic) {
       const user = await UserController.verifyUser(token);
@@ -276,14 +286,17 @@ class FilesController {
       return res.status(400).json({ error: "A folder doesn't have content" });
     }
 
-    if (!fs.existsSync(file.localPath)) {
+    if (size && [100, 250, 500].includes(parseInt(size, 10))) {
+      filePath = `${file.localPath}_${size}`;
+    }
+    if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Not found' });
     }
 
     const mimeType = mime.lookup(file.name);
     res.setHeader('Content-Type', mimeType);
 
-    const fileContent = fs.readFileSync(file.localPath);
+    const fileContent = fs.readFileSync(filePath);
     return res.status(200).send(fileContent);
   }
 }
