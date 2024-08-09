@@ -21,7 +21,16 @@ class AuthController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const [email, password] = Buffer.from(authHeader.split(' ')[1], 'base64')
+    const base64Credentials = authHeader.split(' ')[1];
+
+    if (
+      !/^[A-Za-z0-9+/=]+$/.test(base64Credentials)
+      || base64Credentials.length % 4 !== 0
+    ) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const [email, password] = Buffer.from(base64Credentials, 'base64')
       .toString('utf-8')
       .split(':');
 
