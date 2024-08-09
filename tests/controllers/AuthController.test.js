@@ -81,6 +81,17 @@ describe('authController Integration Tests', () => {
     expect(res.body).to.have.property('error', 'Unauthorized');
   });
 
+  it('should return an error for invalid Basic auth header format', async () => {
+    const invalidAuthHeader = 'Basic invalidbase64';
+    const res = await chai
+      .request(app)
+      .get('/connect')
+      .set('Authorization', invalidAuthHeader);
+
+    expect(res).to.have.status(401);
+    expect(res.body).to.have.property('error', 'Unauthorized');
+  });
+
   it('should log out a user and invalidate the token', async () => {
     const newUser = {
       email: 'abdofola67@gmail.com',
